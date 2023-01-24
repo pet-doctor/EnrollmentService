@@ -5,6 +5,8 @@ import com.petdoctor.enrollment.model.entity.AppointmentEntity;
 import com.petdoctor.enrollment.model.entity.AppointmentState;
 import com.petdoctor.enrollment.repository.AppointmentRepository;
 import com.petdoctor.enrollment.service.AppointmentService;
+import com.petdoctor.enrollment.tool.exception.EnrollmentServiceMappingException;
+import com.petdoctor.enrollment.tool.exception.EnrollmentServiceNotFoundException;
 import com.petdoctor.enrollment.tool.mapper.AppointmentMapper;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
@@ -56,10 +58,31 @@ public class AppointmentServiceImpl implements AppointmentService {
                 appointmentMapper.appointmentDtoToAppointmentEntity(appointmentDto);
 
         if (appointmentEntity == null) {
-            throw new RuntimeException();
+            throw new EnrollmentServiceMappingException("Exception occurred due appointment mapping");
         }
 
         appointmentEntity.setAppointmentState(AppointmentState.TAKEN);
+
+        return appointmentMapper
+                .appointmentEntityToAppointmentDto(
+                        appointmentRepository.save(appointmentEntity));
+    }
+
+    @Override
+    @Transactional
+    public AppointmentDto changeAppointmentState(AppointmentDto appointmentDto, AppointmentState state) {
+
+        AppointmentEntity appointmentEntity =
+                appointmentRepository
+                        .findAppointmentEntityById(appointmentDto.getId())
+                        .orElse(null);
+
+        if (appointmentEntity == null) {
+            throw new EnrollmentServiceNotFoundException("Appointment with id " + appointmentDto.getId() + " has not found");
+        }
+
+        appointmentEntity.setAppointmentState(state);
+        appointmentEntity.setClientId(appointmentDto.getClientId());
 
         return appointmentMapper
                 .appointmentEntityToAppointmentDto(
@@ -76,8 +99,6 @@ public class AppointmentServiceImpl implements AppointmentService {
         if (appointmentEntity == null) {
             return false;
         }
-
-        appointmentRepository.delete(appointmentEntity);
 
         appointmentEntity.setAppointmentState(AppointmentState.CANCELED);
 

@@ -1,13 +1,14 @@
 package com.petdoctor.enrollment.tool.mapper;
 
 import com.petdoctor.enrollment.model.dto.ClientDto;
+import com.petdoctor.enrollment.model.dto.ClientDto.ClientDtoBuilder;
 import com.petdoctor.enrollment.model.entity.ClientEntity;
 import javax.annotation.Generated;
 import org.springframework.stereotype.Component;
 
 @Generated(
     value = "org.mapstruct.ap.MappingProcessor",
-    date = "2022-12-18T23:44:36+0300",
+    date = "2023-01-24T18:14:30+0300",
     comments = "version: 1.4.2.Final, compiler: javac, environment: Java 19 (Oracle Corporation)"
 )
 @Component
@@ -19,17 +20,17 @@ public class ClientMapperImpl implements ClientMapper {
             return null;
         }
 
-        ClientDto clientDto = new ClientDto();
+        ClientDtoBuilder clientDto = ClientDto.builder();
 
-        clientDto.setId( clientEntity.getId() );
-        clientDto.setName( clientEntity.getName() );
-        clientDto.setSurname( clientEntity.getSurname() );
-        clientDto.setEmail( clientEntity.getEmail() );
-        clientDto.setPetName( clientEntity.getPetName() );
-        clientDto.setPetProblem( clientEntity.getPetProblem() );
-        clientDto.setVetClinicId( clientEntity.getVetClinicEntityId() );
+        clientDto.id( clientEntity.getId() );
+        clientDto.name( clientEntity.getName() );
+        clientDto.surname( clientEntity.getSurname() );
+        clientDto.email( clientEntity.getEmail() );
+        clientDto.petName( clientEntity.getPetName() );
+        clientDto.petProblem( clientEntity.getPetProblem() );
+        clientDto.vetClinicId( clientEntity.getVetClinicEntityId() );
 
-        return clientDto;
+        return clientDto.build();
     }
 
     @Override
