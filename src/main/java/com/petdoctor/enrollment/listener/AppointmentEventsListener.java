@@ -33,6 +33,8 @@ public class AppointmentEventsListener {
 
         JsonNode messageNode = readMessage(message);
 
+        // TODO: surround with try-catch
+//        appointmentService.o
 
         log.info("appointment opened successfully");
     }

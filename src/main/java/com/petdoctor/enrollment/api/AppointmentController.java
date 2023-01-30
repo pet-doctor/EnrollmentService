@@ -3,6 +3,7 @@ package com.petdoctor.enrollment.api;
 import com.petdoctor.enrollment.kafka.KafkaConstant;
 import com.petdoctor.enrollment.kafka.KafkaService;
 import com.petdoctor.enrollment.model.dto.AppointmentDto;
+import com.petdoctor.enrollment.model.entity.AppointmentState;
 import com.petdoctor.enrollment.service.AppointmentService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
@@ -83,9 +84,12 @@ public class AppointmentController {
 
         try {
 
-            Boolean result = appointmentService.cancelAppointment(appointmentId);
+            AppointmentDto appointmentDto = appointmentService.cancelAppointment(AppointmentDto.builder()
+                    .id(appointmentId)
+                    .appointmentState(AppointmentState.CANCELED)
+                    .build());
 
-            if (!result) {
+            if (appointmentDto == null) {
 
                 return ResponseEntity.notFound().build();
             }

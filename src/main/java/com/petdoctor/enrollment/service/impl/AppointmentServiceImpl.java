@@ -25,8 +25,7 @@ public class AppointmentServiceImpl implements AppointmentService {
     @Override
     public AppointmentDto getAppointmentById(Long appointmentId) {
 
-        AppointmentEntity appointmentEntity = appointmentRepository
-                .findAppointmentEntityById(appointmentId).orElse(null);
+        AppointmentEntity appointmentEntity = findAppointmentById(appointmentId);
 
         if (appointmentEntity == null) {
             return null;
@@ -72,17 +71,63 @@ public class AppointmentServiceImpl implements AppointmentService {
     @Transactional
     public AppointmentDto changeAppointmentState(AppointmentDto appointmentDto, AppointmentState state) {
 
-        AppointmentEntity appointmentEntity =
-                appointmentRepository
-                        .findAppointmentEntityById(appointmentDto.getId())
-                        .orElse(null);
+        AppointmentEntity appointmentEntity = findAppointmentById(appointmentDto.getId());
 
         if (appointmentEntity == null) {
             throw new EnrollmentServiceNotFoundException("Appointment with id " + appointmentDto.getId() + " has not found");
         }
 
         appointmentEntity.setAppointmentState(state);
-        appointmentEntity.setClientId(appointmentDto.getClientId());
+
+        // TODO: refactor - talantlivo))))
+        if (appointmentEntity.getClientId() != null)
+            appointmentEntity.setClientId(appointmentDto.getClientId());
+
+        return appointmentMapper
+                .appointmentEntityToAppointmentDto(
+                        appointmentRepository.save(appointmentEntity));
+    }
+
+    @Override
+    public AppointmentDto openAppointment(AppointmentDto appointmentDto) {
+
+        AppointmentEntity appointmentEntity = findAppointmentById(appointmentDto.getId());
+
+        if (appointmentEntity == null) {
+            throw new EnrollmentServiceNotFoundException("Appointment has not found");
+        }
+
+        appointmentEntity.setAppointmentState(AppointmentState.OPEN);
+
+        return appointmentMapper
+                .appointmentEntityToAppointmentDto(
+                        appointmentRepository.save(appointmentEntity));
+    }
+
+    @Override
+    public AppointmentDto takeAppointment(AppointmentDto appointmentDto) {
+        AppointmentEntity appointmentEntity = findAppointmentById(appointmentDto.getId());
+
+        if (appointmentEntity == null) {
+            throw new EnrollmentServiceNotFoundException("Appointment has not found");
+        }
+
+        appointmentEntity.setAppointmentState(AppointmentState.TAKEN);
+
+        return appointmentMapper
+                .appointmentEntityToAppointmentDto(
+                        appointmentRepository.save(appointmentEntity));
+    }
+
+    @Override
+    public AppointmentDto closeAppointment(AppointmentDto appointmentDto) {
+        AppointmentEntity appointmentEntity = findAppointmentById(appointmentDto.getId());
+
+        if (appointmentEntity == null) {
+            throw new EnrollmentServiceNotFoundException("Appointment has not found");
+        }
+
+        appointmentEntity.setAppointmentState(AppointmentState.CLOSED);
 
         return appointmentMapper
                 .appointmentEntityToAppointmentDto(
@@ -91,19 +136,22 @@ public class AppointmentServiceImpl implements AppointmentService {
 
     @Override
     @Transactional
-    public Boolean cancelAppointment(Long appointmentId) {
+    public AppointmentDto cancelAppointment(AppointmentDto appointmentDto) {
 
-        AppointmentEntity appointmentEntity =
-                appointmentRepository.findAppointmentEntityById(appointmentId).orElse(null);
+        AppointmentEntity appointmentEntity = findAppointmentById(appointmentDto.getId());
 
         if (appointmentEntity == null) {
-            return false;
+            throw new EnrollmentServiceNotFoundException("Appointment has not found");
         }
 
         appointmentEntity.setAppointmentState(AppointmentState.CANCELED);
 
-        appointmentRepository.save(appointmentEntity);
+        return appointmentMapper
+                .appointmentEntityToAppointmentDto(
+                        appointmentRepository.save(appointmentEntity));
+    }
 
-        return true;
+    private AppointmentEntity findAppointmentById(Long appointmentId) {
+        return appointmentRepository.findAppointmentEntityById(appointmentId).orElse(null);
     }
 }
