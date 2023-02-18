@@ -26,7 +26,7 @@ public class ClientServiceImpl implements ClientService {
             return null;
         }
 
-        return clientMapper.clientEntityToClientDto(clientEntity);
+        return mapEntityToDto(clientEntity);
     }
 
     @Override
@@ -34,9 +34,10 @@ public class ClientServiceImpl implements ClientService {
 
         ClientEntity clientEntity = clientMapper.clientDtoToClientEntity(clientDto);
 
-        return clientMapper
-                .clientEntityToClientDto(
-                        clientRepository.save(clientEntity));
+        return mapEntityToDto(
+                clientRepository
+                        .save(clientEntity));
+
     }
 
 
@@ -56,7 +57,7 @@ public class ClientServiceImpl implements ClientService {
 
 
 
-        return clientMapper.clientEntityToClientDto(clientEntity);
+        return mapEntityToDto(clientEntity);
     }
 
     private ClientEntity findClientById(Long clientId) {
@@ -65,5 +66,17 @@ public class ClientServiceImpl implements ClientService {
                 .orElseThrow(() -> {
                     throw new EnrollmentServiceNotFoundException("Client has not found");
                 });
+    }
+
+    private ClientEntity mapDtoToEntity(ClientDto clientDto) {
+
+        return clientMapper
+                .clientDtoToClientEntity(clientDto);
+    }
+
+    private ClientDto mapEntityToDto(ClientEntity clientEntity) {
+
+        return clientMapper
+                .clientEntityToClientDto(clientEntity);
     }
 }
