@@ -40,16 +40,13 @@ public class AppointmentServiceImpl implements AppointmentService {
             return null;
         }
 
-        return appointmentEntityList
-                .stream().map(appointmentMapper::appointmentEntityToAppointmentDto)
-                .collect(Collectors.toList());
+        return mapEntitiesToDtos(appointmentEntityList);
     }
 
     @Override
     public AppointmentDto registerAppointment(AppointmentDto appointmentDto) {
 
-        AppointmentEntity appointmentEntity =
-                appointmentMapper.appointmentDtoToAppointmentEntity(appointmentDto);
+        AppointmentEntity appointmentEntity = mapDtoToEntity(appointmentDto);
 
         if (appointmentEntity == null) {
             throw new EnrollmentServiceMappingException("Exception occurred due appointment mapping");
@@ -74,8 +71,7 @@ public class AppointmentServiceImpl implements AppointmentService {
         if (appointmentEntity.getAppointmentState() == AppointmentState.OPEN)
             appointmentEntity.setClientId(null);
 
-        return mapEntityToDto(
-                appointmentRepository.save(appointmentEntity));
+        return mapEntityToDto(appointmentEntity);
     }
 
     private AppointmentEntity findAppointmentById(Long appointmentId) {
@@ -88,6 +84,20 @@ public class AppointmentServiceImpl implements AppointmentService {
 
     private AppointmentDto mapEntityToDto(AppointmentEntity appointmentEntity) {
 
-        return appointmentMapper.appointmentEntityToAppointmentDto(appointmentEntity);
+        return appointmentMapper
+                .appointmentEntityToAppointmentDto(appointmentEntity);
+    }
+
+    private AppointmentEntity mapDtoToEntity(AppointmentDto appointmentDto) {
+
+        return appointmentMapper
+                .appointmentDtoToAppointmentEntity(appointmentDto);
+    }
+
+    private List<AppointmentDto> mapEntitiesToDtos(List<AppointmentEntity> appointmentEntities) {
+
+        return appointmentEntities
+                .stream().map(appointmentMapper::appointmentEntityToAppointmentDto)
+                .collect(Collectors.toList());
     }
 }
