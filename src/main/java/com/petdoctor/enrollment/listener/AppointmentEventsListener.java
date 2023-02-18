@@ -9,12 +9,10 @@ import com.petdoctor.enrollment.kafka.KafkaConstant;
 import com.petdoctor.enrollment.model.dto.AppointmentDto;
 import com.petdoctor.enrollment.model.entity.AppointmentState;
 import com.petdoctor.enrollment.service.AppointmentService;
-import com.petdoctor.enrollment.tool.exception.EnrollmentServiceDeserializingException;
 import lombok.AllArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import lombok.var;
-import org.springframework.messaging.Message;
 import org.springframework.kafka.annotation.KafkaListener;
+import org.springframework.messaging.Message;
 import org.springframework.stereotype.Component;
 
 @Slf4j
@@ -26,15 +24,18 @@ public class AppointmentEventsListener {
     private final AppointmentService appointmentService;
 
     @KafkaListener(
-                    topics = KafkaConstant.KAFKA_ENROLLMENT_OPEN_APPOINTMENT_TOPIC,
-                    groupId = KafkaConstant.KAFKA_ENROLLMENT_APPOINTMENT_GROUP
-            )
+            topics = KafkaConstant.KAFKA_ENROLLMENT_OPEN_APPOINTMENT_TOPIC,
+            groupId = KafkaConstant.KAFKA_ENROLLMENT_APPOINTMENT_GROUP
+    )
     public void openAppointmentFromDoctorListener(Message<String> message) {
 
         JsonNode messageNode = readMessage(message);
 
-        // TODO: surround with try-catch
-//        appointmentService.o
+        AppointmentDto appointmentDto = constructAppointmentDtoFromNode(messageNode);
+        appointmentDto.setClientId(null);
+        appointmentDto.setAppointmentState(AppointmentState.OPEN);
+
+        appointmentService.updateAppointment(appointmentDto.getId(), appointmentDto);
 
         log.info("appointment opened successfully");
     }
@@ -47,15 +48,10 @@ public class AppointmentEventsListener {
 
         JsonNode messageNode = readMessage(message);
 
-        AppointmentDto appointmentDto =
-                AppointmentDto.builder()
-                .id(messageNode.get("appointment").asLong())
-                        .appointmentState(AppointmentState.OPEN)
-                        .doctorId(messageNode.get("doctor").asLong())
-                        .clientId(messageNode.get("client").asLong())
-                        .build();
+        AppointmentDto appointmentDto = constructAppointmentDtoFromNode(messageNode);
+        appointmentDto.setAppointmentState(AppointmentState.TAKEN);
 
-        appointmentService.changeAppointmentState(appointmentDto, AppointmentState.TAKEN);
+        appointmentService.updateAppointment(appointmentDto.getId(), appointmentDto);
 
         log.info("client has been enrolled successfully");
     }
@@ -68,24 +64,36 @@ public class AppointmentEventsListener {
 
         JsonNode messageNode = readMessage(message);
 
+        AppointmentDto appointmentDto = constructAppointmentDtoFromNode(messageNode);
+        appointmentDto.setAppointmentState(AppointmentState.CLOSED);
+
+        appointmentService.updateAppointment(appointmentDto.getId(), appointmentDto);
+
         log.info("appointment closed successfully");
         log.info(messageNode.toString());
     }
 
     private JsonNode readMessage(Message<String> message) {
+
         JsonNode messageNode = null;
         try {
             ObjectWriter ow = new ObjectMapper().writer().withDefaultPrettyPrinter();
             String payloadJson = ow.writeValueAsString(message.getPayload());
             messageNode = objectMapper.readTree(payloadJson);
         } catch (JsonProcessingException e) {
-            e.printStackTrace();
-        }
-
-        if (messageNode == null) {
-            throw new EnrollmentServiceDeserializingException("Exception occurred due deserializing the message");
+            log.error(e.getMessage());
         }
 
         return messageNode;
+    }
+
+    private AppointmentDto constructAppointmentDtoFromNode(JsonNode messageNode) {
+
+        return AppointmentDto.builder()
+                .id(messageNode.get("appointment").asLong())
+                .appointmentState(AppointmentState.OPEN)
+                .doctorId(messageNode.get("doctor").asLong())
+                .clientId(messageNode.get("client").asLong())
+                .build();
     }
 }

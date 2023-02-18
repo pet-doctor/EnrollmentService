@@ -4,7 +4,7 @@ import lombok.*;
 import org.hibernate.Hibernate;
 
 import javax.persistence.*;
-import java.time.LocalDate;
+import java.time.LocalDateTime;
 import java.util.Objects;
 
 @Entity
@@ -21,7 +21,7 @@ public class AppointmentEntity {
     private Long id;
 
     @Column(name = "start_time", nullable = false)
-    private LocalDate startTime;
+    private LocalDateTime startTime;
 
     @Enumerated(value = EnumType.STRING)
     @Column(name = "appointment_state", nullable = false)

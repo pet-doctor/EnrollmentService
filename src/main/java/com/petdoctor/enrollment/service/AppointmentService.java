@@ -10,9 +10,5 @@ public interface AppointmentService {
     AppointmentDto getAppointmentById(Long appointmentId);
     List<AppointmentDto> getAppointmentsByClientId(Long clientId);
     AppointmentDto registerAppointment(AppointmentDto appointmentDto);
-    AppointmentDto changeAppointmentState(AppointmentDto appointmentDto, AppointmentState appointmentState);
-    AppointmentDto openAppointment(AppointmentDto appointmentDto);
-    AppointmentDto takeAppointment(AppointmentDto appointmentDto);
-    AppointmentDto closeAppointment(AppointmentDto appointmentDto);
-    AppointmentDto cancelAppointment(AppointmentDto appointmentDto);
+    AppointmentDto updateAppointment(Long appointmentId, AppointmentDto appointmentDto);
 }
