@@ -4,6 +4,7 @@ import com.petdoctor.enrollment.model.dto.ClientDto;
 import com.petdoctor.enrollment.model.entity.ClientEntity;
 import com.petdoctor.enrollment.repository.ClientRepository;
 import com.petdoctor.enrollment.service.ClientService;
+import com.petdoctor.enrollment.tool.exception.EnrollmentServiceNotFoundException;
 import com.petdoctor.enrollment.tool.mapper.ClientMapper;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
@@ -43,12 +44,7 @@ public class ClientServiceImpl implements ClientService {
     @Transactional
     public ClientDto changeClientInfo(Long clientId, ClientDto clientDto) {
 
-        ClientEntity clientEntity = clientRepository
-                .findClientEntityById(clientId).orElse(null);
-
-        if (clientEntity == null) {
-            return null;
-        }
+        ClientEntity clientEntity = findClientById(clientId);
 
         if (clientDto.getId() != null) clientEntity.setId(clientDto.getId());
         if (clientDto.getName() != null) clientEntity.setName(clientDto.getName());
@@ -58,8 +54,16 @@ public class ClientServiceImpl implements ClientService {
         if (clientDto.getPetProblem() != null) clientEntity.setPetProblem(clientDto.getPetProblem());
         if (clientDto.getVetClinicId() != null) clientEntity.setVetClinicEntityId(clientDto.getVetClinicId());
 
-        clientRepository.delete(clientEntity);
+
 
         return clientMapper.clientEntityToClientDto(clientEntity);
+    }
+
+    private ClientEntity findClientById(Long clientId) {
+
+        return clientRepository.findClientEntityById(clientId)
+                .orElseThrow(() -> {
+                    throw new EnrollmentServiceNotFoundException("Client has not found");
+                });
     }
 }
