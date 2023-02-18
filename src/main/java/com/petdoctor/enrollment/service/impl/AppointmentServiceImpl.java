@@ -5,13 +5,12 @@ import com.petdoctor.enrollment.model.entity.AppointmentEntity;
 import com.petdoctor.enrollment.model.entity.AppointmentState;
 import com.petdoctor.enrollment.repository.AppointmentRepository;
 import com.petdoctor.enrollment.service.AppointmentService;
-import com.petdoctor.enrollment.tool.exception.EnrollmentServiceMappingException;
-import com.petdoctor.enrollment.tool.exception.EnrollmentServiceNotFoundException;
+import com.petdoctor.enrollment.tool.exception.EnrollmentNotFoundException;
 import com.petdoctor.enrollment.tool.mapper.AppointmentMapper;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Transactional;
 
+import java.util.Collections;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -27,6 +26,10 @@ public class AppointmentServiceImpl implements AppointmentService {
 
         AppointmentEntity appointmentEntity = findAppointmentById(appointmentId);
 
+        if (appointmentEntity == null) {
+            throw new EnrollmentNotFoundException("Appointment doesn't exist");
+        }
+
         return mapEntityToDto(appointmentEntity);
     }
 
@@ -37,7 +40,7 @@ public class AppointmentServiceImpl implements AppointmentService {
                 appointmentRepository.findAppointmentEntitiesByClientId(clientId).orElse(null);
 
         if (appointmentEntityList == null) {
-            return null;
+            return Collections.emptyList();
         }
 
         return mapEntitiesToDtos(appointmentEntityList);
@@ -46,26 +49,25 @@ public class AppointmentServiceImpl implements AppointmentService {
     @Override
     public AppointmentDto registerAppointment(AppointmentDto appointmentDto) {
 
-        AppointmentEntity appointmentEntity = mapDtoToEntity(appointmentDto);
-
-        if (appointmentEntity == null) {
-            throw new EnrollmentServiceMappingException("Exception occurred due appointment mapping");
+        if (findAppointmentById(appointmentDto.getId()) != null) {
+            throw new EnrollmentNotFoundException("Appointment is already exists");
         }
 
+        AppointmentEntity appointmentEntity = mapDtoToEntity(appointmentDto);
         appointmentEntity.setAppointmentState(AppointmentState.TAKEN);
 
-        return mapEntityToDto(appointmentEntity);
+        return mapEntityToDto(
+                appointmentRepository.save(appointmentEntity));
     }
 
     @Override
-    @Transactional
     public AppointmentDto updateAppointment(Long appointmentId, AppointmentDto appointmentDto) {
 
         AppointmentEntity appointmentEntity = findAppointmentById(appointmentId);
 
-        if (appointmentEntity.getClientId() != null &&
-                appointmentDto.getClientId() != null)
-            appointmentEntity.setClientId(appointmentDto.getClientId());
+        if (appointmentEntity == null) {
+            throw new EnrollmentNotFoundException("Appointment doesn't exsist");
+        }
 
         appointmentEntity.setAppointmentState(appointmentDto.getAppointmentState());
         if (appointmentEntity.getAppointmentState() == AppointmentState.OPEN)
@@ -77,9 +79,7 @@ public class AppointmentServiceImpl implements AppointmentService {
     private AppointmentEntity findAppointmentById(Long appointmentId) {
 
         return appointmentRepository
-                .findAppointmentEntityById(appointmentId).orElseThrow(() -> {
-                    throw new EnrollmentServiceNotFoundException("Appointment with id " + appointmentId + " has not found");
-                });
+                .findAppointmentEntityById(appointmentId).orElse(null);
     }
 
     private AppointmentDto mapEntityToDto(AppointmentEntity appointmentEntity) {
